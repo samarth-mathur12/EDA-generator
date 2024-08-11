@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 
 streamlit.title("Simple Data Dashboard")
 
-
 uploaded_file = streamlit.file_uploader("Choose your file to be uploaded" , type="CSV")
 
 

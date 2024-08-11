@@ -1,0 +1,6 @@
+pandas
+streamlit
+yfinance
+pandas-datareader
+prophet
+matplotlib
