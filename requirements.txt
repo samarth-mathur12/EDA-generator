@@ -4,3 +4,4 @@ yfinance
 pandas-datareader
 prophet
 matplotlib
+fpdf
