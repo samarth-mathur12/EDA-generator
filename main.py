@@ -1,6 +1,7 @@
 import streamlit 
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotly.express as px
 import time
 
 
@@ -14,7 +15,7 @@ def load_data(file, progress_callback=None):
     # Simulate loading process with updates
     if progress_callback:
         for i in range(10):
-            time.sleep(0.3)  # Simulate time-consuming task
+            time.sleep(0.01)  # Simulate time-consuming task
             progress_callback((i + 1) * 10)  # Update progress to (i+1)*10%
     
     # Read the CSV file
@@ -39,7 +40,7 @@ if uploaded_file is not None:
     df = load_data(uploaded_file, progress_callback=progress_bar.progress)
     
     # Update progress bar after loading data
-    progress_bar.progress(1.0)
+    progress_bar.progress(0)
     
     
     # Exporting reports generated
@@ -91,17 +92,26 @@ if uploaded_file is not None:
     x_column = streamlit.selectbox("Select a x_value :", columns)
     y_column = streamlit.selectbox("Select a y_value :", columns)
     
-    if streamlit.button("Generate Plot"):
-        streamlit.subheader("Line Chart")
-        streamlit.line_chart(filtered_df.set_index(x_column)[y_column])
     
-    if streamlit.button("Generate Scatter Plot"):
-        streamlit.subheader("Scatter Plot")
-        plt.figure(figsize=(10, 6))
-        plt.scatter(df[x_column], df[y_column])
-        plt.xlabel(x_column)
-        plt.ylabel(y_column)
-        streamlit.pyplot(plt)
+    
+    # Adjustting plotting 
+    left_column, middle_column , right_column = streamlit.columns(3)
+        
+    with left_column:
+        if streamlit.button("Generate Plot"):
+            streamlit.subheader("Line Chart")
+            streamlit.line_chart(filtered_df.set_index(x_column)[y_column])
+    
+    with right_column:
+        if streamlit.button("Generate Scatter Plot"):
+            streamlit.subheader("Scatter Plot")
+            plt.figure(figsize=(10, 6))
+            plt.scatter(df[x_column], df[y_column])
+            plt.xlabel(x_column)
+            plt.ylabel(y_column)
+            streamlit.pyplot(plt)
+        
+
     
 else:
     streamlit.write("Waiting for a file upload........ ")
