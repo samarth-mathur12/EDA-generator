@@ -7,20 +7,13 @@ from fpdf import FPDF
 
 
 
-
 streamlit.title("Simple Data Dashboard")
 
 uploaded_file = streamlit.file_uploader("Choose your file to be uploaded" , type="CSV")
 
 
 # Function to load data without caching
-def load_data(file, progress_callback=None):
-    # Simulate loading process with updates
-    if progress_callback:
-        for i in range(10):
-            time.sleep(0.01)  # Simulate time-consuming task
-            progress_callback((i + 1) * 10)  # Update progress to (i+1)*10%
-    
+def load_data(file ):  
     # Read the CSV file
     df = pd.read_csv(file)
     return df
@@ -29,29 +22,6 @@ def load_data(file, progress_callback=None):
 def get_unique_values(df, column):
     return df[column].unique()
 
-
-# Function to show circular progress
-# def show_circular_progress(value):
-#     html_code = f"""
-#     <div style="display: flex; justify-content: center; align-items: center; height: 200px;">
-#         <div style="position: relative; width: 120px; height: 120px;">
-#             <svg viewBox="0 0 100 100" class="circular-chart" style="width: 100%; height: 100%;">
-#                 <circle class="circle-bg" cx="50" cy="50" r="45" stroke="#e6e6e6" stroke-width="10" fill="none"/>
-#                 <circle class="circle" cx="50" cy="50" r="45" stroke="#0083B8" stroke-width="10" fill="none" stroke-dasharray="{value} 100" transform="rotate(-90 50 50)"/>
-#             </svg>
-#             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; color: #0083B8;">
-#                 {value}%
-#             </div>
-#         </div>
-#     </div>
-#     <style>
-#         .circular-chart .circle {
-#             transition: stroke-dasharray 0.35s;
-#             transform-origin: center;
-#         }
-#     </style>
-#     """
-#     components.html(html_code, height=250)
 
 def save_to_pdf(df, filtered_df, x_column, y_column):
     pdf = FPDF()
@@ -102,32 +72,11 @@ def save_to_pdf(df, filtered_df, x_column, y_column):
     
 if uploaded_file is not None:
     streamlit.write("File uploaded..........")
-
-    # Progress bar
-    progress_bar = streamlit.progress(0)
     
     # Load the data without caching
-    df = load_data(uploaded_file, progress_callback=progress_bar.progress)
-    
-    # Update progress bar after loading data
-    progress_bar.progress(100)
+    df = load_data(uploaded_file)
+
    
-   # Filtering Data
-    streamlit.subheader("Filter data")
-    columns =  df.columns.tolist()
-    selected_column = streamlit.selectbox("Select columns to filter by: ", columns)
-    
-    unique_values = get_unique_values(df, selected_column)
-    selected_values = streamlit.selectbox("Select value: ", unique_values)
-    
-    filtered_df = df[df[selected_column] == selected_values]
-    streamlit.write(filtered_df) 
-    
-    # Plotting Data
-    streamlit.subheader("Plot data")
-    x_column = streamlit.selectbox("Select a x_value :", columns)
-    y_column = streamlit.selectbox("Select a y_value :", columns)
-    
     # Exporting reports generated
     left_column , right_column = streamlit.columns(2)
     with left_column:    
@@ -159,6 +108,21 @@ if uploaded_file is not None:
     streamlit.subheader("Data Summary")
     streamlit.write(df.describe())
     
+    # Filtering Data
+    streamlit.subheader("Filter data")
+    columns =  df.columns.tolist()
+    selected_column = streamlit.selectbox("Select columns to filter by: ", columns)
+    
+    unique_values = get_unique_values(df, selected_column)
+    selected_values = streamlit.selectbox("Select value: ", unique_values)
+    
+    filtered_df = df[df[selected_column] == selected_values]
+    streamlit.write(filtered_df) 
+    
+    # Plotting Data
+    streamlit.subheader("Plot data")
+    x_column = streamlit.selectbox("Select a x_value :", columns)
+    y_column = streamlit.selectbox("Select a y_value :", columns)
         
     
     # Adjustting plotting 
