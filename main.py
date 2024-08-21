@@ -1,8 +1,11 @@
 import streamlit 
 import pandas as pd
 import matplotlib.pyplot as plt
-import plotly.express as px
+import plotly.express as px 
 import time
+from fpdf import FPDF
+
+
 
 
 streamlit.title("Simple Data Dashboard")
@@ -27,9 +30,76 @@ def get_unique_values(df, column):
     return df[column].unique()
 
 
-def save_to_pdf(df, filtered_df):
-    pass
+# Function to show circular progress
+# def show_circular_progress(value):
+#     html_code = f"""
+#     <div style="display: flex; justify-content: center; align-items: center; height: 200px;">
+#         <div style="position: relative; width: 120px; height: 120px;">
+#             <svg viewBox="0 0 100 100" class="circular-chart" style="width: 100%; height: 100%;">
+#                 <circle class="circle-bg" cx="50" cy="50" r="45" stroke="#e6e6e6" stroke-width="10" fill="none"/>
+#                 <circle class="circle" cx="50" cy="50" r="45" stroke="#0083B8" stroke-width="10" fill="none" stroke-dasharray="{value} 100" transform="rotate(-90 50 50)"/>
+#             </svg>
+#             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; color: #0083B8;">
+#                 {value}%
+#             </div>
+#         </div>
+#     </div>
+#     <style>
+#         .circular-chart .circle {
+#             transition: stroke-dasharray 0.35s;
+#             transform-origin: center;
+#         }
+#     </style>
+#     """
+#     components.html(html_code, height=250)
 
+def save_to_pdf(df, filtered_df, x_column, y_column):
+    pdf = FPDF()
+    pdf.add_page()
+    
+    pdf.set_font("Arial", size=12)
+    
+    #title
+    pdf.cell(200, 10, txt="EDA Report", ln=True, align="C")
+    
+    # Data Preview
+    pdf.ln(10)
+    pdf.cell(200,10, txt="Data Preview",ln=True, align="L")
+    for i in range(min(len(df), 5)):
+        pdf.cell(200,10, txt=str(df.iloc[i].to_dict()), ln=True, align="L")
+        
+    #NULL Values
+    pdf.ln(10)
+    pdf.cell(200, 10, txt="NULL Values", ln=True, align="L")
+    null_values  = df.isna().sum().to_dict()
+    for k, v in null_values.items():
+        pdf.cell(200, 10, txt=f"{k}: {v}", ln=True, align="L")
+    
+    # Duplicate Values
+    pdf.ln(10)
+    pdf.cell(200, 10, txt="Duplicate Values", ln=True, align="L")
+    pdf.cell(200, 10, txt=str(df.duplicated().sum()), ln=True, align="L")
+    
+    # Data Summary
+    pdf.ln(10)
+    pdf.cell(200, 10, txt="Data Summary", ln=True, align="L")
+    summary = df.describe().to_dict()
+    for k, v in summary.items():
+        pdf.cell(200, 10, txt=f"{k}: {v}", ln=True, align="L")
+        
+    #Save plot as an image and add to PDF
+    plt.figure(figsize=(10, 6))
+    plt.scatter(filtered_df[x_column], filtered_df[y_column])
+    plt.xlabel(x_column)
+    plt.ylabel(y_column)
+    plt.title("Scatter Plot")
+    plt.savefig("plot.png")
+    pdf.ln(10)
+    pdf.image("plot.png", x=10, y=None, w=100)
+
+    # Save the PDF
+    pdf.output("EDA_Report.pdf")
+    
 if uploaded_file is not None:
     streamlit.write("File uploaded..........")
 
@@ -40,15 +110,33 @@ if uploaded_file is not None:
     df = load_data(uploaded_file, progress_callback=progress_bar.progress)
     
     # Update progress bar after loading data
-    progress_bar.progress(0)
+    progress_bar.progress(100)
+   
+   # Filtering Data
+    streamlit.subheader("Filter data")
+    columns =  df.columns.tolist()
+    selected_column = streamlit.selectbox("Select columns to filter by: ", columns)
     
+    unique_values = get_unique_values(df, selected_column)
+    selected_values = streamlit.selectbox("Select value: ", unique_values)
+    
+    filtered_df = df[df[selected_column] == selected_values]
+    streamlit.write(filtered_df) 
+    
+    # Plotting Data
+    streamlit.subheader("Plot data")
+    x_column = streamlit.selectbox("Select a x_value :", columns)
+    y_column = streamlit.selectbox("Select a y_value :", columns)
     
     # Exporting reports generated
     left_column , right_column = streamlit.columns(2)
     with left_column:    
         if streamlit.button('Export to PDF'):
-            #save_to_pdf(df, filtered_df)
+            save_to_pdf(df, df, x_column, y_column)
             streamlit.write("Exported to PDF")
+            with open("EDA_Report.pdf", "rb") as file:
+                streamlit.download_button("Download PDF", file, file_name="EDA_Report.pdf")
+    
     with right_column:
         if streamlit.button('Export to Excel'):
             #save_to_pdf(df, filtered_df)
@@ -71,28 +159,7 @@ if uploaded_file is not None:
     streamlit.subheader("Data Summary")
     streamlit.write(df.describe())
     
-    
-    
-    # Filtering Data
-    streamlit.subheader("Filter data")
-    columns =  df.columns.tolist()
-    selected_column = streamlit.selectbox("Select columns to filter by: ", columns)
-    
-    unique_values = get_unique_values(df, selected_column)
-    selected_values = streamlit.selectbox("Select value: ", unique_values)
-    
-    filtered_df = df[df[selected_column] == selected_values]
-    streamlit.write(filtered_df)
-    
-    
-    
-    
-    # Plotting Data
-    streamlit.subheader("Plot data")
-    x_column = streamlit.selectbox("Select a x_value :", columns)
-    y_column = streamlit.selectbox("Select a y_value :", columns)
-    
-    
+        
     
     # Adjustting plotting 
     left_column, middle_column , right_column = streamlit.columns(3)
